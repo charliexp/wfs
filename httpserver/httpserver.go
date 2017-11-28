@@ -12,8 +12,12 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"strconv"
+	"sync"
 	//	"strings"
+	"errors"
 	"time"
+
+	"github.com/satori/go.uuid"
 
 	. "github.com/charliexp/wfs/conf"
 	"github.com/charliexp/wfs/storge"
@@ -37,6 +41,40 @@ const (
 	_404 = "404" //no found
 	_500 = "500" //err
 )
+
+////////////////////////////////////////////////////////////////
+var counter = struct {
+	sync.RWMutex
+	m map[string]string
+}{m: make(map[string]string)}
+
+func generateToken(uniqKey string) (string, error) {
+	counter.RLock()
+	token, ok := counter.m[uniqKey]
+	counter.RUnlock()
+	if ok {
+		return token, nil
+	}
+
+	token = uuid.NewV4().String()
+
+	if token == "" {
+		return "", errors.New("Server error: Cannot generate a token")
+	}
+	counter.RLock()
+	counter.m[uniqKey] = token
+	counter.RUnlock()
+
+	time.AfterFunc(2*time.Second, func() {
+		counter.Lock()
+		defer counter.Unlock()
+
+		delete(counter.m, uniqKey)
+	})
+	return token, nil
+}
+
+//////////////////////////////////////////////////////////////////////
 
 //func getData(key string) (bs []byte, err error) {
 //	bs, shardname, err := storge.GetData(key)
@@ -199,7 +237,7 @@ func BasicAuth(h httprouter.Handle, requiredUser, requiredPassword string) httpr
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		// Get the Basic Authentication credentials
 		user, password, hasAuth := r.BasicAuth()
-		//fmt.Println("setting user password is:", requiredUser, requiredPassword)
+		fmt.Println("setting user password is:", requiredUser, requiredPassword)
 		if requiredUser == "" && requiredPassword == "" {
 			h(w, r, ps)
 		} else if hasAuth && user == requiredUser && password == requiredPassword {
