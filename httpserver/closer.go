@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	. "github.com/donnie4w/wfs/conf"
+	. "github.com/charliexp/wfs/conf"
 )
 
 type Closer interface {

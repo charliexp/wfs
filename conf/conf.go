@@ -5,7 +5,9 @@
 package conf
 
 import (
+	"encoding/json"
 	"flag"
+	"os"
 )
 
 var _version_ = "0.0.2"
@@ -26,6 +28,8 @@ type confbean struct {
 	ServerReadTimeout int
 	Bind              string
 	Compress          bool
+	User              string
+	Password          string
 }
 type cmdBean struct {
 	SetWeight   string
@@ -34,6 +38,10 @@ type cmdBean struct {
 	Slavelist   bool
 	CutOff      bool
 	Ping        string
+}
+
+type UserConfig struct {
+	user map[string]string
 }
 
 func ParseFlag() {
@@ -53,6 +61,8 @@ func (this *confbean) ParseFlag() {
 	flag.IntVar(&this.ServerReadTimeout, "srt", 5, "server read timeout")
 	flag.StringVar(&this.Bind, "bind", "0.0.0.0", "")
 	flag.BoolVar(&this.Compress, "compress", false, "compress file")
+	flag.StringVar(&this.User, "user", "", "user string")
+	flag.StringVar(&this.Password, "pwd", "", "password string")
 }
 
 func (this *cmdBean) ParseFlag() {
@@ -66,4 +76,18 @@ func (this *cmdBean) ParseFlag() {
 
 func IsCmd() bool {
 	return Cmd.AddSlave != "" || Cmd.CutOff || Cmd.SetWeight != "" || Cmd.Slavelist || Cmd.RemoveSlave != "" || Cmd.Ping != ""
+}
+
+func ParseUserConfig(confFile string, confVar *UserConfig) error {
+	file, err := os.Open(confFile)
+	if err != nil {
+		return err
+	}
+	decoder := json.NewDecoder(file)
+
+	err = decoder.Decode(confVar)
+	if err != nil {
+		return err
+	}
+	return nil
 }

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/donnie4w/wfs/db"
+	. "github.com/charliexp/wfs/db"
 )
 
 func _Test_lockstring(t *testing.T) {

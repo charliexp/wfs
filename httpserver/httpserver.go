@@ -15,9 +15,9 @@ import (
 	//	"strings"
 	"time"
 
+	. "github.com/charliexp/wfs/conf"
+	"github.com/charliexp/wfs/storge"
 	"github.com/donnie4w/go-logger/logger"
-	. "github.com/donnie4w/wfs/conf"
-	"github.com/donnie4w/wfs/storge"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -195,6 +195,25 @@ func readPort() (port int) {
 }
 
 /********************************************************************************/
+func BasicAuth(h httprouter.Handle, requiredUser, requiredPassword string) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		// Get the Basic Authentication credentials
+		user, password, hasAuth := r.BasicAuth()
+		//fmt.Println("setting user password is:", requiredUser, requiredPassword)
+		if requiredUser == "" && requiredPassword == "" {
+			h(w, r, ps)
+		} else if hasAuth && user == requiredUser && password == requiredPassword {
+			// Delegate request to the given handle
+			h(w, r, ps)
+		} else {
+			// Request Basic Authentication otherwise
+			w.Header().Set("WWW-Authenticate", "Basic realm=Restricted")
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		}
+	}
+}
+
+/********************************************************************************/
 func Start() {
 	if IsCmd() {
 		CF.Port = readPort()
@@ -217,11 +236,13 @@ func Start() {
 		router := httprouter.New()
 		router.POST("/thrift", thandler)
 		//		router.POST("/ping", ping)
-		router.GET("/r/*.r", read)
-		router.POST("/c", check)
-		router.POST("/u/*.r", upload)
-		router.POST("/u", upload)
-		router.DELETE("/d/*.r", del)
+
+		router.GET("/r/*.r", BasicAuth(read, CF.User, CF.Password))
+		router.POST("/c", BasicAuth(check, CF.User, CF.Password))
+		router.POST("/u/*.r", BasicAuth(upload, CF.User, CF.Password))
+		router.POST("/u", BasicAuth(upload, CF.User, CF.Password))
+		router.DELETE("/d/*.r", BasicAuth(del, CF.User, CF.Password))
+
 		if CF.Pprof > 0 {
 			go http.ListenAndServe(fmt.Sprint(CF.Bind, ":", CF.Pprof), nil)
 		}

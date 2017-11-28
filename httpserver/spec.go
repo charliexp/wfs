@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/donnie4w/wfs/image"
+	"github.com/charliexp/wfs/image"
 )
 
 type Spec struct {

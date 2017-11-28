@@ -14,9 +14,9 @@ import (
 	"strings"
 
 	"git.apache.org/thrift.git/lib/go/thrift"
-	. "github.com/donnie4w/wfs/conf"
-	. "github.com/donnie4w/wfs/httpserver/protocol"
-	//	"github.com/donnie4w/wfs/storge"
+	. "github.com/charliexp/wfs/conf"
+	. "github.com/charliexp/wfs/httpserver/protocol"
+	//	"github.com/charliexp/wfs/storge"
 	"github.com/julienschmidt/httprouter"
 )
 
