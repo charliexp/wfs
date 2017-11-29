@@ -6,6 +6,7 @@ package httpserver
 
 import (
 	"bytes"
+	"crypto/md5"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -15,6 +16,7 @@ import (
 	"sync"
 	//	"strings"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/satori/go.uuid"
@@ -72,6 +74,12 @@ func generateToken(uniqKey string) (string, error) {
 		delete(counter.m, uniqKey)
 	})
 	return token, nil
+}
+
+func MD5(data []byte) string {
+	m := md5.New()
+	m.Write(data)
+	return fmt.Sprintf("%x", m.Sum(nil))
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -240,13 +248,23 @@ func BasicAuth(h httprouter.Handle, requiredUser, requiredPassword string) httpr
 		fmt.Println("setting user password is:", requiredUser, requiredPassword)
 		if requiredUser == "" && requiredPassword == "" {
 			h(w, r, ps)
-		} else if hasAuth && user == requiredUser && password == requiredPassword {
-			// Delegate request to the given handle
-			h(w, r, ps)
 		} else {
-			// Request Basic Authentication otherwise
-			w.Header().Set("WWW-Authenticate", "Basic realm=Restricted")
-			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			fmt.Println("user string is:", user, password)
+			name := strings.Split(user, "-")
+			if len(name) >= 2 {
+				user = name[0]
+				requiredPassword = MD5([]byte(requiredPassword + ":" + name[1]))
+				fmt.Println("make password:", requiredPassword)
+			}
+			fmt.Println("user string is", user, password)
+			if hasAuth && user == requiredUser && password == requiredPassword {
+				// Delegate request to the given handle
+				h(w, r, ps)
+			} else {
+				// Request Basic Authentication otherwise
+				w.Header().Set("WWW-Authenticate", "Basic realm=Restricted")
+				http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			}
 		}
 	}
 }

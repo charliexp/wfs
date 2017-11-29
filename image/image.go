@@ -16,6 +16,8 @@ import (
 	"strings"
 
 	"github.com/disintegration/imaging"
+	//"github.com/golang/image/bmp"
+	//"github.com/golang/image/tiff"
 	"golang.org/x/image/bmp"
 	"golang.org/x/image/tiff"
 )
