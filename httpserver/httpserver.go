@@ -251,13 +251,17 @@ func BasicAuth(h httprouter.Handle, requiredUser, requiredPassword string) httpr
 		} else {
 			fmt.Println("user string is:", user, password)
 			name := strings.Split(user, "-")
+			var requiredPwd string
+
 			if len(name) >= 2 {
 				user = name[0]
-				requiredPassword = MD5([]byte(requiredPassword + ":" + name[1]))
+				requiredPwd = MD5([]byte(requiredPassword + ":" + name[1]))
 				fmt.Println("make password:", requiredPassword)
+			} else {
+				requiredPwd = requiredPassword
 			}
 			fmt.Println("user string is", user, password)
-			if hasAuth && user == requiredUser && password == requiredPassword {
+			if hasAuth && user == requiredUser && password == requiredPwd {
 				// Delegate request to the given handle
 				h(w, r, ps)
 			} else {
